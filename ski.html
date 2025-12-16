@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Salvatore sulle Dolomiti</title>
+    <style>
+        :root {
+            --primary: #005f9e;
+            --accent: #d32f2f;
+            --success: #2e7d32;
+            --bg: #e3f2fd;
+            --card-bg: #ffffff;
+            --text: #37474f;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        h1 { 
+            margin: 0; 
+            font-size: 1.6rem; 
+            color: var(--primary); 
+            text-align: center;
+            text-shadow: 1px 1px 0px white;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: -5px;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .mode-switch {
+            background: white;
+            padding: 5px;
+            border-radius: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+        }
+
+        .mode-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #777;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* MAIN CONTAINER */
+        #app-container {
+            width: 100%;
+            max-width: 380px;
+            position: relative;
+        }
+
+        /* --- STUDY MODE STYLES --- */
+        .study-view { display: flex; flex-direction: column; align-items: center; }
+
+        .filter-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            width: 100%;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            scrollbar-width: none;
+        }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+
+        .btn-filter {
+            white-space: nowrap;
+            padding: 6px 14px;
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            background: white;
+            color: var(--primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .btn-filter.active { background: var(--primary); color: white; }
+
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 440px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-radius: 20px;
+        }
+        .card.is-flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-back { transform: rotateY(180deg); border: 3px solid var(--primary); }
+
+        .nav-controls { display: flex; gap: 20px; width: 100%; justify-content: center; }
+        .btn-nav {
+            background: var(--primary); color: white; border: none;
+            padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 #004ba0;
+        }
+        .btn-nav:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- QUIZ MODE STYLES --- */
+        .quiz-view { display: none; flex-direction: column; width: 100%; }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 15px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+
+        .quiz-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn { from {transform: scale(0.9); opacity:0;} to {transform: scale(1); opacity:1;} }
+
+        .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
+        }
+
+        .option-btn:hover { border-color: var(--primary); background: #f0f8ff; }
+        .option-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .option-btn.correct { background: var(--success); color: white; border-color: var(--success); }
+        .option-btn.wrong { background: var(--accent); color: white; border-color: var(--accent); animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .game-over { text-align: center; padding: 40px; background: white; border-radius: 20px; }
+        .win-screen { text-align: center; padding: 30px; background: white; border-radius: 20px; border: 4px solid #FFD700; }
+
+        /* TYPOGRAPHY */
+        .emoji-big { font-size: 5rem; margin-bottom: 15px; }
+        .term-main { font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 5px; text-align: center; }
+        .term-sub { font-size: 1.4rem; color: var(--primary); font-weight: bold; text-align: center;}
+        .context-box { 
+            background: #f1f8e9; padding: 12px; border-radius: 10px; 
+            margin-top: 20px; text-align: left; border-left: 4px solid var(--success); font-style: italic;
+            width: 100%; box-sizing: border-box; font-size: 0.95rem; line-height: 1.4;
+        }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏔️ Salvatore sulle Dolomiti</h1>
+        <div class="subtitle">Entrenador Técnico & Vocabulario</div>
+        <div class="mode-switch">
+            <button class="mode-btn active" onclick="switchMode('study')">📖 Estudiar</button>
+            <button class="mode-btn" onclick="switchMode('quiz')">🎮 Jugar Quiz</button>
+        </div>
+    </header>
+
+    <div id="app-container">
+        
+        <div id="study-view" class="study-view">
+            <div class="filter-scroll">
+                <button class="btn-filter active" onclick="filterCards('all', this)">Todo</button>
+                <button class="btn-filter" onclick="filterCards('tecnica', this)">Técnica</button>
+                <button class="btn-filter" onclick="filterCards('tecnico', this)">Equipo</button>
+                <button class="btn-filter" onclick="filterCards('pista', this)">Pista</button>
+                <button class="btn-filter" onclick="filterCards('rifugio', this)">Comida</button>
+                <button class="btn-filter" onclick="filterCards('frases', this)">Frases</button>
+            </div>
+
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="card" id="flashcard">
+                    </div>
+            </div>
+
+            <div class="nav-controls">
+                <button class="btn-nav" onclick="prevCard(event)">←</button>
+                <div style="align-self:center; font-weight:bold; color:#777;" id="counter">1/50</div>
+                <button class="btn-nav" onclick="nextCard(event)">→</button>
+            </div>
+        </div>
+
+        <div id="quiz-view" class="quiz-view">
+            <div class="stats-bar">
+                <span>🎯 Restantes: <span id="cards-left">0</span></span>
+                <span>❤️ Vidas: <span id="lives">3</span></span>
+            </div>
+
+            <div id="quiz-content">
+                </div>
+
+            <div id="game-over-screen" class="hidden game-over">
+                <h2>😢 ¡Caduta!</h2>
+                <p>Te has dado un buen golpe.</p>
+                <div style="font-size:3rem; margin:20px;">❄️</div>
+                <p>Te faltaron <b id="final-left"></b> palabras.</p>
+                <button class="btn-nav" onclick="restartQuiz()">Reintentar</button>
+            </div>
+
+            <div id="win-screen" class="hidden win-screen">
+                <h2>🏆 ¡Maestro di Sci!</h2>
+                <p>Has dominado todo el vocabulario.</p>
+                <div style="font-size:4rem; margin:20px;">🥇</div>
+                <p>Estás listo para la pista negra.</p>
+                <button class="btn-nav" onclick="restartQuiz()">Jugar de nuevo</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- BASE DE DATOS AMPLIADA (Técnica, Botas, Ajustes) ---
+        const database = [
+            // --- TÉCNICA (NUEVO) ---
+            { it: "Spazzaneve", es: "Cuña (Pizza)", cat: "tecnica", em: "🍕", ctx: "Fai lo spazzaneve per controllare la velocità." },
+            { it: "Sci paralleli", es: "Esquís paralelos", cat: "tecnica", em: "⏸️", ctx: "Cerca di tenere gli sci paralleli in curva." },
+            { it: "Sci a valle", es: "Esquí del valle (exterior)", cat: "tecnica", em: "📉", ctx: "Carica tutto il peso sullo sci a valle." },
+            { it: "Sci a monte", es: "Esquí de la montaña (interior)", cat: "tecnica", em: "📈", ctx: "Lo sci a monte deve essere leggero." },
+            { it: "Presa di spigolo", es: "Toma de cantos", cat: "tecnica", em: "📐", ctx: "Aumenta la presa di spigolo sul ghiaccio." },
+            { it: "Centralità", es: "Posición centrada", cat: "tecnica", em: "🎯", ctx: "Mantieni la centralità, non sederti indietro." },
+            { it: "Busto", es: "Torso / Tronco", cat: "tecnica", em: "👕", ctx: "Il busto deve guardare verso valle." },
+            { it: "Cortoraggio", es: "Giro corto", cat: "tecnica", em: "⚡", ctx: "Nel ripido devi fare il cortoraggio." },
+            { it: "Condurre", es: "Conducir (Carving)", cat: "tecnica", em: "🔪", ctx: "Devi condurre la curva, non derapare." },
+            { it: "Derapare", es: "Derrapar", cat: "tecnica", em: "💨", ctx: "Hai derapato troppo in chiusura curva." },
+            { it: "Frenata", es: "Frenada", cat: "tecnica", em: "🛑", ctx: "Fai una frenata decisa a sci paralleli." },
+            { it: "Inversione", es: "Cambio de canto/Inversión", cat: "tecnica", em: "🔄", ctx: "Veloce nell'inversione degli spigoli." },
+            { it: "Diagonale", es: "Diagonal", cat: "tecnica", em: "↗️", ctx: "Attraversa il pendio in diagonale alta." },
+            { it: "Peso a valle", es: "Peso al valle", cat: "tecnica", em: "🏋️", ctx: "Butta il peso a valle!" },
+
+            // --- EQUIPO & BOTAS (AMPLIADO) ---
+            { it: "I Ganci", es: "Ganchos / Hebillas", cat: "tecnico", em: "🔒", ctx: "Chiudi bene i ganci dello scarpone." },
+            { it: "Lo Strap", es: "Correa (Velcro superior)", cat: "tecnico", em: "🎗️", ctx: "Stringi lo strap per bloccare la tibia." },
+            { it: "La Scarpetta", es: "Botín interior", cat: "tecnico", em: "🧦", ctx: "La scarpetta è bagnata, devo asciugarla." },
+            { it: "Flex", es: "Índice de rigidez", cat: "tecnico", em: "🧱", ctx: "Cerco uno scarpone con flex 110." },
+            { it: "Taratura (DIN)", es: "Calibración / Ajuste DIN", cat: "tecnico", em: "⚖️", ctx: "Che taratura hai messo agli attacchi?" },
+            { it: "Affilare", es: "Afilar", cat: "tecnico", em: "🗡️", ctx: "Devo affilare le lamine, non tengono." },
+            { it: "Le Lamine", es: "Los Cantos", cat: "tecnico", em: "🔪", ctx: "Il ghiaccio vivo richiede lamine perfette." },
+            { it: "La Soletta", es: "La Suela", cat: "tecnico", em: "🎿", ctx: "Ho preso un sasso sulla soletta." },
+            { it: "Spatola", es: "Punta del esquí", cat: "tecnico", em: "⬆️", ctx: "In curva, premi sulla spatola." },
+            { it: "Coda", es: "Cola del esquí", cat: "tecnico", em: "⬇️", ctx: "Non arretrare troppo sulla coda." },
+            { it: "Attacchi", es: "Fijaciones", cat: "tecnico", em: "⚙️", ctx: "Gli attacchi si sono sganciati." },
+            { it: "Sciancratura", es: "Cotas / Sidecut", cat: "tecnico", em: "⌛", ctx: "Sci con sciancratura accentuata." },
+            { it: "Bastoncini", es: "Bastones", cat: "tecnico", em: "🥢", ctx: "Punta il bastoncino!" },
+            { it: "Sciolinare", es: "Encerar", cat: "tecnico", em: "🕯️", ctx: "Gli sci non scorrono, bisogna sciolinare." },
+
+            // --- PISTA ---
+            { it: "Gatto delle nevi", es: "Pisapistas", cat: "pista", em: "🚜", ctx: "I gatti battono la pista." },
+            { it: "Gobbe", es: "Baches / Bañeras", cat: "pista", em: "🐫", ctx: "Le gobbe spaccano le ginocchia." },
+            { it: "Lastrone", es: "Placa de hielo", cat: "pista", em: "🧊", ctx: "Occhio al lastrone verde!" },
+            { it: "Neve Pappa", es: "Nieve Primavera", cat: "pista", em: "💦", ctx: "La neve è pappa, si fa fatica." },
+            { it: "Falsopiano", es: "Llano / Plano", cat: "pista", em: "➡️", ctx: "Odio il falsopiano, devo spingere." },
+            { it: "Muro", es: "Muro (Pendiente fuerte)", cat: "pista", em: "🧗", ctx: "Il muro finale è molto ripido." },
+            { it: "Bivio", es: "Bifurcación", cat: "pista", em: "🔀", ctx: "Al bivio vai a destra." },
+            { it: "Seggiovia", es: "Telesilla", cat: "pista", em: "💺", ctx: "Abbassa la sbarra." },
+            { it: "Funivia", es: "Teleférico", cat: "pista", em: "🚠", ctx: "La funivia porta in cima." },
+            { it: "Soccorso Piste", es: "Socorro en Pista", cat: "pista", em: "🚑", ctx: "Chiama il soccorso." },
+            { it: "Rete di protezione", es: "Red de protección", cat: "pista", em: "🥅", ctx: "È finito nelle reti." },
+
+            // --- COMIDA ---
+            { it: "Bombardino", es: "Bombardino", cat: "rifugio", em: "💣", ctx: "Un bombardino con panna!" },
+            { it: "Vin Brulé", es: "Vino Caliente", cat: "rifugio", em: "🍷", ctx: "Un vin brulé per scaldarci." },
+            { it: "Canederli", es: "Canederli (Knödel)", cat: "rifugio", em: "🧆", ctx: "Canederli in brodo." },
+            { it: "Polenta concia", es: "Polenta con queso", cat: "rifugio", em: "🧀", ctx: "Polenta concia e funghi." },
+            { it: "Grappa", es: "Orujo", cat: "rifugio", em: "🥃", ctx: "Una grappa barricata." },
+            { it: "Scontrino", es: "Ticket / Recibo", cat: "rifugio", em: "🧾", ctx: "Lo scontrino, prego." },
+            { it: "Panino", es: "Bocadillo", cat: "rifugio", em: "🥪", ctx: "Un panino con lo speck." },
+
+            // --- FRASES & ROPA ---
+            { it: "Pistaaa!", es: "¡Pista! (Abran paso)", cat: "frases", em: "🗣️", ctx: "Grida 'Pista!' se necessario." },
+            { it: "Cartella", es: "Caída fuerte (Slang)", cat: "frases", em: "💥", ctx: "Che cartella che ha tirato!" },
+            { it: "Gambe cotte", es: "Piernas muertas", cat: "frases", em: "🍗", ctx: "Basta, ho le gambe cotte." },
+            { it: "A uovo", es: "Hacer el huevo (Schuss)", cat: "frases", em: "🥚", ctx: "Mettiti a uovo!" },
+            { it: "Giornaliero", es: "Forfait de día", cat: "frases", em: "🎫", ctx: "Quanto costa il giornaliero?" },
+            { it: "Scarponi", es: "Botas de esquí", cat: "frases", em: "👢", ctx: "Mi fanno male gli scarponi." },
+            { it: "Casco", es: "Casco", cat: "frases", em: "⛑️", ctx: "Allaccia il casco." },
+            { it: "Maschera", es: "Gafas de ventisca", cat: "frases", em: "🥽", ctx: "La maschera si è appannata." }
+        ];
+
+        // --- VARIABLES DE ESTADO ---
+        let studyList = [...database];
+        let studyIndex = 0;
+        let isFlipped = false;
+        
+        let quizPool = [];      
+        let lives = 3;
+        let currentQuizItem = null;
+        let isQuizActive = false;
+
+        // --- FUNCIONES DE NAVEGACIÓN ---
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if(mode === 'study') {
+                document.getElementById('study-view').classList.remove('hidden');
+                document.getElementById('quiz-view').classList.add('hidden');
+                document.querySelector('[onclick="switchMode(\'study\')"]').classList.add('active');
+                renderStudyCard();
+            } else {
+                document.getElementById('study-view').classList.add('hidden');
+                document.getElementById('quiz-view').classList.remove('hidden');
+                document.getElementById('quiz-view').style.display = 'flex';
+                document.querySelector('[onclick="switchMode(\'quiz\')"]').classList.add('active');
+                if(!isQuizActive) startQuiz();
+            }
+        }
+
+        // --- LÓGICA MODO ESTUDIO ---
+        function renderStudyCard() {
+            const item = studyList[studyIndex];
+            const cardElement = document.getElementById('flashcard');
+            
+            cardElement.innerHTML = `
+                <div class="card-face card-front">
+                    <span style="position:absolute; top:10px; right:15px; background:var(--primary); color:white; padding:4px 10px; border-radius:10px; font-size:0.7rem;">${item.cat.toUpperCase()}</span>
+                    <div class="emoji-big">${item.em}</div>
+                    <div class="term-main">${item.es}</div>
+                    <div style="color:#999; font-size:0.8rem; margin-top:10px;">Toca para ver Italiano 🇮🇹</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="emoji-big" style="font-size:3rem;">${item.em}</div>
+                    <div class="term-sub">${item.it}</div>
+                    <div style="font-size:0.9rem; color:#777;">(${item.es})</div>
+                    <div class="context-box">"${item.ctx}"</div>
+                </div>
+            `;
+            
+            cardElement.classList.remove('is-flipped');
+            isFlipped = false;
+            document.getElementById('counter').innerText = `${studyIndex + 1}/${studyList.length}`;
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            document.getElementById('flashcard').classList.toggle('is-flipped', isFlipped);
+        }
+
+        function nextCard(e) { e.stopPropagation(); if(studyIndex < studyList.length-1) { studyIndex++; } else { studyIndex=0; } renderStudyCard(); }
+        function prevCard(e) { e.stopPropagation(); if(studyIndex > 0) { studyIndex--; } else { studyIndex=studyList.length-1; } renderStudyCard(); }
+
+        function filterCards(cat, btn) {
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            studyList = cat === 'all' ? [...database] : database.filter(i => i.cat === cat);
+            studyIndex = 0;
+            renderStudyCard();
+        }
+
+        // --- LÓGICA MODO QUIZ ---
+        function startQuiz() {
+            quizPool = [...database];
+            lives = 3;
+            isQuizActive = true;
+            updateStats();
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('win-screen').classList.add('hidden');
+            document.getElementById('quiz-content').classList.remove('hidden');
+            nextQuizQuestion();
+        }
+
+        function updateStats() {
+            document.getElementById('cards-left').innerText = quizPool.length;
+            document.getElementById('lives').innerText = '❤️'.repeat(lives);
+        }
+
+        function nextQuizQuestion() {
+            if (lives <= 0) return gameOver();
+            if (quizPool.length === 0) return gameWin();
+
+            const randomIndex = Math.floor(Math.random() * quizPool.length);
+            currentQuizItem = quizPool[randomIndex];
+            
+            let options = [currentQuizItem];
+            while(options.length < 3) {
+                let randomItem = database[Math.floor(Math.random() * database.length)];
+                if(!options.includes(randomItem) && randomItem.it !== currentQuizItem.it) {
+                    options.push(randomItem);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const quizHTML = `
+                <div class="quiz-card">
+                    <div class="emoji-big">${currentQuizItem.em}</div>
+                    <h2 style="margin:10px 0;">${currentQuizItem.es}</h2>
+                    <p style="color:#666; font-size:0.9rem;">¿Cómo se dice en Italiano?</p>
+                </div>
+                <div class="quiz-options">
+                    ${options.map(opt => `
+                        <button class="option-btn" onclick="checkAnswer('${opt.it.replace(/'/g, "\\'")}', this)">
+                            ${opt.it}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('quiz-content').innerHTML = quizHTML;
+        }
+
+        function checkAnswer(selectedIt, btnElement) {
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+            if(selectedIt === currentQuizItem.it) {
+                btnElement.classList.add('correct');
+                quizPool = quizPool.filter(item => item.it !== currentQuizItem.it);
+                updateStats();
+                setTimeout(nextQuizQuestion, 1000);
+            } else {
+                btnElement.classList.add('wrong');
+                lives--;
+                updateStats();
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    if(b.innerText.trim() === currentQuizItem.it) b.classList.add('correct');
+                });
+                if(lives > 0) setTimeout(nextQuizQuestion, 1500);
+                else setTimeout(gameOver, 1500);
+            }
+        }
+
+        function gameOver() {
+            document.getElementById('quiz-content').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('final-left').innerText = quizPool.length;
+            isQuizActive = false;
+        }
+
+        function gameWin() {
+            document.getElementById('quiz-content').classList.add('hidden');
+            document.getElementById('win-screen').classList.remove('hidden');
+            isQuizActive = false;
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        renderStudyCard();
+
+    </script>
+</body>
+</html>
